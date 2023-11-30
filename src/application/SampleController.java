@@ -2,81 +2,61 @@ package application;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+
 import java.util.ArrayList;
-import java.util.List;
-import javafx.scene.input.MouseEvent;
-import javafx.application.Platform;
 
 public class SampleController {
 
     @FXML
     private Label statusLabel;
 
-    // Use a List to store the circles
-    private List<Circle> connect4Grid = new ArrayList<>();
-
     @FXML
+    private ArrayList<ArrayList<Circle>> circlesList;
+
     public void initialize() {
-        Platform.runLater(this::initializeConnect4Grid);
-    }
+        circlesList = new ArrayList<>();
 
-    private void initializeConnect4Grid() {
-        int rows = 6; // Number of rows
-        int columns = 7; // Number of columns
-
-        for (int col = 0; col < columns; col++) {
-            for (int row = 0; row < rows; row++) {
-                Circle circle = createCircle("circle" + col + row);
-                circle.setStroke(Color.BLACK);
-                // Pass MouseEvent as the parameter to handleCircleClick
-                circle.setOnMouseClicked(event -> handleCircleClick(event));
-                connect4Grid.add(circle);
+        for (int i = 0; i < 6; i++) {
+            ArrayList<Circle> row = new ArrayList<>();
+            for (int j = 0; j < 7; j++) {
+                Circle circle = getCircleById("circle" + i + j);
+                if (circle == null) {
+                    System.err.println("Circle is null for ID: " + "circle" + (i * 7 + j));
+                } else {
+                    row.add(circle);
+                }
             }
+            
+            circlesList.add(row);
         }
-    }
-
-    private Circle createCircle(String id) {
-        // Use JavaFX utility method to look up a node by ID
-        return (Circle) statusLabel.getScene().lookup("#" + id);
     }
 
     @FXML
     private void handleCircleClick(MouseEvent event) {
-        // Your event handling logic here
+        Circle clickedCircle = (Circle) event.getSource();
+        int rowIndex = GridPane.getRowIndex(clickedCircle);
+        int colIndex = GridPane.getColumnIndex(clickedCircle);
+
+        // Change the color of the clicked circle
+        Color newColor = Color.RED; // You can set any color you want
+        clickedCircle.setFill(newColor);
+
+        // Update the status label
+        statusLabel.setText("Circle at (" + rowIndex + ", " + colIndex + ") clicked");
     }
 
-    private void checkForWin(int col, int row) {
-        // Add your Connect Four win-checking logic here
-        // You might want to check horizontally, vertically, and diagonally
-        // Example: Check horizontally
-        if (checkLine(col, row, 1, 0) || checkLine(col, row, -1, 0)) {
-            statusLabel.setText("Player wins!");
-        }
-    }
-
-    private boolean checkLine(int col, int row, int colDirection, int rowDirection) {
-        // Check for four consecutive circles in a line
-        int count = 1; // Count the clicked circle
-        Color targetColor = Color.RED; // Assuming 'RED' represents the current player
-
-        for (int i = 1; i < 4; i++) {
-            int nextCol = col + i * colDirection;
-            int nextRow = row + i * rowDirection;
-
-            if (isValidPosition(nextCol, nextRow) &&
-                    connect4Grid.get(nextCol).get(nextRow).getFill() == targetColor) {
-                count++;
-            } else {
-                break; // Stop if the next circle is not of the same color
+    private Circle getCircleById(String id) {
+        for (ArrayList<Circle> row : circlesList) {
+            for (Circle circle : row) {
+                if (circle.getId().equals(id)) {
+                    return circle;
+                }
             }
         }
-
-        return count >= 4;
-    }
-
-    private boolean isValidPosition(int col, int row) {
-        return col >= 0 && col < connect4Grid.size() && row >= 0 && row < connect4Grid.get(col).size();
+        return null;
     }
 }

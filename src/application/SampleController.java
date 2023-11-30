@@ -28,7 +28,7 @@ public class SampleController {
                     System.err.println("Circle is null for ID: " + "circle" + (i * 7 + j));
                 } else {
                     row.add(circle);
-                }
+                }  
             }
             
             circlesList.add(row);

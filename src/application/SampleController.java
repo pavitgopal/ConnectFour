@@ -1,10 +1,16 @@
 package application;
 
 import javafx.fxml.FXML;
+
+import java.util.Random;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.GridPane;
+import java.util.concurrent.TimeUnit;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
+
 
 import java.util.ArrayList;
 
@@ -34,8 +40,11 @@ public class SampleController {
                 }
             }
         }
+        
+        //gridPane.setStyle("-fx-background-color: #ffff00;");
     }
 
+    
     @FXML
     protected void onButtonClick(ActionEvent e) {
         Button clickedButton = (Button) e.getSource();
@@ -46,12 +55,14 @@ public class SampleController {
         Button buttonToColor = findFirstUncoloredButtonInColumn(columnIndex);
         if (buttonToColor != null) {
             // Apply the color and disable the button
-            String colorStyle = counter % 2 == 0 ? "-fx-background-color: #000DFF;" : "-fx-background-color: #d7d300;";
+            String colorStyle = "-fx-background-color: #ff0000;";
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             buttonToColor.setStyle(newStyle);
             buttonToColor.setDisable(true);
-            counter++;
+            //counter++;
             checkWin();
+            
+            randomAI();
         }
     }
 
@@ -61,7 +72,7 @@ public class SampleController {
         return Integer.parseInt(id.substring(id.length() - 1));
     }
 
-    private Button findFirstUncoloredButtonInColumn(int columnIndex) {
+    protected Button findFirstUncoloredButtonInColumn(int columnIndex) {
         // Start from the bottom of the column and move upwards
         for (int i = buttons.size() - 1; i >= 0; i--) {
             Button button = buttons.get(i);
@@ -75,9 +86,23 @@ public class SampleController {
     
     private void randomAI() {
     	
+    	PauseTransition pause = new PauseTransition(Duration.seconds(1));
+        pause.setOnFinished(event -> {
+            int random = new Random().nextInt(7); // assuming 7 columns, generate a number between 0 and 6
+            Button randButton = findFirstUncoloredButtonInColumn(random);
+            
+            if (randButton != null) {
+                String colorStyle = "-fx-background-color: #000000;";
+                String newStyle = colorStyle + "-fx-background-radius: 100;";
+                randButton.setStyle(newStyle);
+                randButton.setDisable(true);
+                
+                checkWin();
+            }
+        });
+        pause.play();
     }
-
-
+    
 
     @FXML
     protected void checkWin() {
@@ -145,18 +170,44 @@ public class SampleController {
 
     private void declareWinner(String colorStyle) {
         // Declare the winner based on the color style
-        if (colorStyle.contains("#000DFF")) { // blue color
+        if (colorStyle.contains("#000000")) { // blue color
             numBlueWins++;
-            winnerColor.setText("Blue wins!");
-        } else if (colorStyle.contains("#d7d300")) { // yellow color
+            winnerColor.setText("Black wins!");
+        } else if (colorStyle.contains("#ff0000")) { // yellow color
             numYellowWins++;
-            winnerColor.setText("Yellow wins!");
+            winnerColor.setText("Red wins!");
+        }
+        
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 7; j++) {
+            	
+            	String buttonId = "button" + i + j;
+                Button buttonToDisable = (Button) gridPane.lookup("#" + buttonId);
+                
+            	buttonToDisable.setDisable(true);
+            }
         }
     }
 
 
     @FXML
     protected void onReset(ActionEvent e) {
-        // Implementation of reset logic
+    	
+    	counter = 0;
+        winnerColor.setText("Winner: ");
+        
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 7; j++) {
+            	String buttonId = "button" + i + j;
+                Button buttonToReset = (Button) gridPane.lookup("#" + buttonId);
+                
+                String colorStyle = "-fx-background-color: #cfcbcb;";
+                String newStyle = colorStyle + "-fx-background-radius: 100;";
+                buttonToReset.setStyle(newStyle);
+                buttonToReset.setDisable(false);
+                
+             
+            } 
+        }
     }
 }

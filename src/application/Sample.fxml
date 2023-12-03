@@ -303,11 +303,7 @@
    <top>
       <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
-            <Label alignment="CENTER" prefHeight="17.0" prefWidth="517.0" text="Note: Player 1 (Blue) goes first." translateX="20.0" translateY="20.0">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </Label>
+            
             <Label fx:id="winnerColor" alignment="CENTER" prefHeight="100.0" prefWidth="471.0" text="Winner: ">
                <font>
                   <Font name="Consolas" size="18.0" />

@@ -81,8 +81,53 @@ public class SampleController {
 
     @FXML
     protected void checkWin() {
-        
+        // Check for vertical (column-wise) win
+        for (int col = 0; col < 7; col++) { // assuming 7 columns
+            for (int row = 0; row < 5; row++) { // stop at 5 to avoid out of bounds
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col))) {
+                    declareWinner(colorStyle);
+                    return;
+                }
+            }
+        }
+
+        // Check for horizontal (row-wise) win
+        for (int row = 0; row < 8; row++) { // assuming 8 rows
+            for (int col = 0; col < 4; col++) { // stop at 4 to avoid out of bounds
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row, col + 1))
+                        && colorStyle.equals(getButtonColorStyle(row, col + 2))
+                        && colorStyle.equals(getButtonColorStyle(row, col + 3))) {
+                    declareWinner(colorStyle);
+                    return;
+                }
+            }
+        }
     }
+
+    private String getButtonColorStyle(int row, int col) {
+        String buttonId = "button" + row + col;
+        Button button = (Button) gridPane.lookup("#" + buttonId);
+        if (button != null && button.isDisabled()) { // check only colored (disabled) buttons
+            return button.getStyle();
+        }
+        return "";
+    }
+
+    private void declareWinner(String colorStyle) {
+        // Declare the winner based on the color style
+        if (colorStyle.contains("#000DFF")) { // blue color
+            numBlueWins++;
+            winnerColor.setText("Blue wins!");
+        } else if (colorStyle.contains("#d7d300")) { // yellow color
+            numYellowWins++;
+            winnerColor.setText("Yellow wins!");
+        }
+    }
+
 
     @FXML
     protected void onReset(ActionEvent e) {

@@ -106,6 +106,32 @@ public class SampleController {
                 }
             }
         }
+        
+        // Check for diagonal win (Top-Left to Bottom-Right)
+        for (int row = 0; row < 5; row++) { // assuming 8 rows, stop at 5
+            for (int col = 0; col < 4; col++) { // assuming 7 columns, stop at 4
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col + 1))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col + 2))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col + 3))) {
+                    declareWinner(colorStyle);
+                    return;
+                }
+            }
+        }
+
+        // Check for diagonal win (Top-Right to Bottom-Left)
+        for (int row = 0; row < 5; row++) {
+            for (int col = 3; col < 7; col++) { // start from column 3 to avoid out of bounds
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col - 1))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col - 2))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col - 3))) {
+                    declareWinner(colorStyle);
+                    return;
+                }
+            }
+        }
     }
 
     private String getButtonColorStyle(int row, int col) {

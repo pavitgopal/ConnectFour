@@ -235,19 +235,24 @@ public class SampleController {
     		
     	}
     	
-    	if (!found) {
-            int bestColumn = findBestColumnForAI();
-            Button bestButton = findFirstUncoloredButtonInColumn(bestColumn);
-            if (bestButton != null) {
-                String colorStyle = "-fx-background-color: #000000;";
-                String newStyle = colorStyle + "-fx-background-radius: 100;";
-                bestButton.setStyle(newStyle);
-                logGameState("Computer", bestColumn);
-            }
+    	if (found) {
+            // If a winning or blocking move has been found and executed, exit the method
+            return;
         }
-    	
-    	randomAI();
-    	//System.out.println("random spot found");
+
+        // If no move has been made yet, proceed to find the best column or make a random move
+        int bestColumn = findBestColumnForAI();
+        Button bestButton = findFirstUncoloredButtonInColumn(bestColumn);
+        if (bestButton != null) {
+            String colorStyle = "-fx-background-color: #000000;";
+            String newStyle = colorStyle + "-fx-background-radius: 100;";
+            bestButton.setStyle(newStyle);
+            logGameState("Computer", bestColumn);
+            return; // Exit after making a move
+        }
+
+        // If all else fails, make a random move
+        randomAI();
     }
     
     private int findBestColumnForAI() {

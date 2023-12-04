@@ -5,6 +5,8 @@
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -217,7 +219,7 @@
             
             
             
-            
+       
          </children>
       </GridPane>
    </center>
@@ -241,20 +243,35 @@
                   <Button fx:id="saveButton" mnemonicParsing="false" onAction="#onSaveGame" prefHeight="41.0" prefWidth="99.0" text="Save Game" />
                </children>
             </VBox>
-            <VBox prefHeight="71.0" prefWidth="100.0" />
-            <VBox prefHeight="200.0" prefWidth="100.0" />
-  <ChoiceBox fx:id="loadGameChoiceBox" prefHeight="47.0" prefWidth="100.0" />
-  <Button onAction="#onLoadGame" prefHeight="46.0" prefWidth="77.0" text="Load Game" />
+            <VBox prefHeight="71.0" prefWidth="100.0">
+               <children>
+        <ChoiceBox fx:id="loadGameChoiceBox" prefHeight="47.0" prefWidth="100.0" />
+               </children></VBox>
+            <VBox prefHeight="200.0" prefWidth="100.0">
+               <children>
+        <Button onAction="#onLoadGame" prefHeight="46.0" prefWidth="112.0" text="Load Game" />
+               </children></VBox>
+            <HBox prefHeight="100.0" prefWidth="200.0" />
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../connect4logo%20(1).png" />
+               </image>
+            </ImageView>
 
 
          </children>
       </HBox>
    </bottom>
    <top>
-      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <HBox prefHeight="35.0" prefWidth="800.0" BorderPane.alignment="CENTER">
          <children>
+            <ImageView fitHeight="89.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../../connect-four-clipart-10.png" />
+               </image>
+            </ImageView>
             
-            <Label fx:id="winnerColor" alignment="CENTER" prefHeight="100.0" prefWidth="471.0" text="Winner: ">
+            <Label fx:id="winnerColor" alignment="CENTER" prefHeight="90.0" prefWidth="713.0" text="Winner: ">
                <font>
                   <Font name="Consolas" size="18.0" />
                </font>

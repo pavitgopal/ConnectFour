@@ -1,0 +1,2 @@
+You dropped a chip in column 0
+Computer dropped a chip in column 6

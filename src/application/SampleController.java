@@ -2,6 +2,7 @@ package application;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.GridPane;
@@ -9,12 +10,24 @@ import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.Random;
+import java.io.PrintWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Scanner;
 
 public class SampleController {
     @FXML
     private GridPane gridPane;
+    
+    @FXML
+    private Button saveButton;
+
+    @FXML
+    private ChoiceBox<String> loadGameChoiceBox;
 
     private ArrayList<Button> buttons = new ArrayList<>();
+    private ArrayList<String> gameStateLog = new ArrayList<>();
 
     @FXML
     private Label winnerColor, yellowWins, blueWins;
@@ -33,7 +46,21 @@ public class SampleController {
                 if (button != null) {
                     buttons.add(button);
                     button.setOnAction(this::onButtonClick);
+                    populateLoadGameChoiceBox();
                 }
+            }
+        }
+    }
+    
+    private void populateLoadGameChoiceBox() {
+        File folder = new File("savedGames");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        File[] listOfFiles = folder.listFiles();
+        for (File file : listOfFiles) {
+            if (file.isFile()) {
+                loadGameChoiceBox.getItems().add(file.getName());
             }
         }
     }
@@ -48,10 +75,18 @@ public class SampleController {
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             buttonToColor.setStyle(newStyle);
             buttonToColor.setDisable(true);
+            logGameState("You", columnIndex);
             checkWin();
+            
             thoughtfulAI();
             //randomAI();
+            
         }
+    }
+    
+    private void logGameState(String player, int columnIndex) {
+        gameStateLog.add(player + " dropped a chip in column " + columnIndex);
+        System.out.println(player + " dropped a chip in column " + columnIndex);
     }
 
     private int getColumnIndex(Button button) {
@@ -80,6 +115,9 @@ public class SampleController {
                 String newStyle = colorStyle + "-fx-background-radius: 100;";
                 randButton.setStyle(newStyle);
                 randButton.setDisable(true);
+                
+                logGameState("Computer", random);
+                
                 checkWin();
             }
         });
@@ -106,7 +144,8 @@ public class SampleController {
                 
                 if(found)
                 {
-                	System.out.println("winning spot found");
+                	//System.out.println("winning spot found");
+                	logGameState("Computer", col);
                 	return;
                 }
                     
@@ -147,7 +186,8 @@ public class SampleController {
                     
                     potentialWinButton.setStyle(newStyle);
                     potentialWinButton.setDisable(true);
-                    System.out.println("blocking spot found");
+                    //System.out.println("blocking spot found");
+                    logGameState("Player", col);
                 	return;
                 }
                     
@@ -165,7 +205,7 @@ public class SampleController {
     	}
     	
     	randomAI();
-    	System.out.println("random spot found");
+    	//System.out.println("random spot found");
     }
 
     @FXML
@@ -317,6 +357,30 @@ public class SampleController {
             }
         }
     }
+    
+    private void saveGame() {
+        try (PrintWriter out = new PrintWriter("gameState.txt")) {
+            for (String logEntry : gameStateLog) {
+                out.println(logEntry);
+            }
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        }
+    }
+
+    private void loadGame() {
+        try (Scanner scanner = new Scanner(new File("gameState.txt"))) {
+            gameStateLog.clear();
+            while (scanner.hasNextLine()) {
+                String logEntry = scanner.nextLine();
+                gameStateLog.add(logEntry);
+                System.out.println(logEntry);
+                // You need to implement how each log entry affects the game state
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
 
 
     @FXML
@@ -339,4 +403,73 @@ public class SampleController {
             } 
         }
     }
+    
+    @FXML
+    protected void onLoadGame(ActionEvent e) {
+        String selectedFile = loadGameChoiceBox.getValue();
+        if (selectedFile != null && !selectedFile.isEmpty()) {
+            loadGame("savedGames/" + selectedFile);
+        }
+    }
+
+
+    
+    @FXML
+    protected void onSaveGame(ActionEvent e) {
+        String fileName = "savedGames/" + System.currentTimeMillis() + ".txt";
+        saveGame(fileName);
+        loadGameChoiceBox.getItems().add(fileName); // Add the new save file to the choice box
+    }
+
+    private void saveGame(String fileName) {
+        try (PrintWriter out = new PrintWriter(fileName)) {
+            for (String logEntry : gameStateLog) {
+                out.println(logEntry);
+            }
+            System.out.println("Game saved to: " + fileName); // Confirm file writing
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error saving game: " + e.getMessage());
+        }
+    }
+
+    private void loadGame(String fileName) {
+        try (Scanner scanner = new Scanner(new File(fileName))) {
+            resetGame(); // Reset the game before loading new state
+            while (scanner.hasNextLine()) {
+                String logEntry = scanner.nextLine();
+                applyLogEntry(logEntry); // Apply each log entry to the game state
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void applyLogEntry(String logEntry) {
+        String[] parts = logEntry.split(" ");
+        if (parts.length < 6) return; // Basic validation
+
+        String player = parts[0];
+        int columnIndex = Integer.parseInt(parts[5]);
+
+        Button buttonToColor = findFirstUncoloredButtonInColumn(columnIndex);
+        if (buttonToColor != null) {
+            String colorStyle = player.equals("You") ? "-fx-background-color: #ff0000;" : "-fx-background-color: #000000;";
+            String newStyle = colorStyle + "-fx-background-radius: 100;";
+            buttonToColor.setStyle(newStyle);
+            buttonToColor.setDisable(true);
+        }
+    }
+
+    private void resetGame() {
+        winnerColor.setText("Winner: ");
+        for (Button button : buttons) {
+            String colorStyle = "-fx-background-color: #cfcbcb;";
+            String newStyle = colorStyle + "-fx-background-radius: 100;";
+            button.setStyle(newStyle);
+            button.setDisable(false);
+        }
+    }
+
 }

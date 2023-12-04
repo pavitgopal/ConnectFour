@@ -106,6 +106,7 @@ public class SampleController {
                 
                 if(found)
                 {
+                	System.out.println("winning spot found");
                 	return;
                 }
                     
@@ -117,10 +118,54 @@ public class SampleController {
                
                 
             }
+    		
+    		
             
     	}
     	
+    	for (int col = 0; col < 7; col++) 
+    	{
+    		Button potentialWinButton = findFirstUncoloredButtonInColumn(col);
+    		
+    		if (potentialWinButton != null) {
+                // Temporarily color the button to check for a win
+                String originalStyle = potentialWinButton.getStyle();
+                
+                String colorStyle = "-fx-background-color: #ff0000;";
+                String newStyle = colorStyle + "-fx-background-radius: 100;";
+                
+                potentialWinButton.setStyle(newStyle);
+                potentialWinButton.setDisable(true);
+                
+                checkWinOpp();
+                
+                if(found)
+                {
+                	
+                	colorStyle = "-fx-background-color: #000000;";
+                    newStyle = colorStyle + "-fx-background-radius: 100;";
+                    
+                    potentialWinButton.setStyle(newStyle);
+                    potentialWinButton.setDisable(true);
+                    System.out.println("blocking spot found");
+                	return;
+                }
+                    
+                else
+            	{
+	            	potentialWinButton.setStyle(originalStyle);
+	            	potentialWinButton.setDisable(false);
+            	}
+               
+                
+            }
+    		
+    		
+    		
+    	}
+    	
     	randomAI();
+    	System.out.println("random spot found");
     }
 
     @FXML
@@ -177,6 +222,64 @@ public class SampleController {
                         && colorStyle.equals(getButtonColorStyle(row + 2, col - 2))
                         && colorStyle.equals(getButtonColorStyle(row + 3, col - 3))) {
                     declareWinner(colorStyle);
+                    found = true;
+                    return;
+                }
+            }
+        }
+    }
+    
+    
+    @FXML
+    protected void checkWinOpp() {
+        found = false;
+
+        // Check for vertical (column-wise) win
+        for (int col = 0; col < 7; col++) { // 7 columns
+            for (int row = 0; row < 3; row++) { // only need to check up to row 3 for vertical wins
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col))) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        // Check for horizontal (row-wise) win
+        for (int row = 0; row < 6; row++) { // 6 rows
+            for (int col = 0; col < 4; col++) { // only need to check up to column 4 for horizontal wins
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row, col + 1))
+                        && colorStyle.equals(getButtonColorStyle(row, col + 2))
+                        && colorStyle.equals(getButtonColorStyle(row, col + 3))) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        // Check for diagonal win (Top-Left to Bottom-Right)
+        for (int row = 0; row < 3; row++) { // up to row 3
+            for (int col = 0; col < 4; col++) { // up to column 4
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col + 1))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col + 2))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col + 3))) {
+                    found = true;
+                    return;
+                }
+            }
+        }
+
+        // Check for diagonal win (Top-Right to Bottom-Left)
+        for (int row = 0; row < 3; row++) {
+            for (int col = 3; col < 7; col++) { // start from column 3
+                String colorStyle = getButtonColorStyle(row, col);
+                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col - 1))
+                        && colorStyle.equals(getButtonColorStyle(row + 2, col - 2))
+                        && colorStyle.equals(getButtonColorStyle(row + 3, col - 3))) {
                     found = true;
                     return;
                 }

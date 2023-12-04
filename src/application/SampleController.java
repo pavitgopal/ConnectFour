@@ -56,6 +56,7 @@ public class SampleController {
                 if (button != null) {
                     buttons.add(button);
                     button.setOnAction(this::onButtonClick);
+                    button.setStyle("-fx-background-color: #cfcbcb; -fx-background-radius: 100;");
                     populateLoadGameChoiceBox();
                 }
             }
@@ -86,16 +87,28 @@ public class SampleController {
 
     @FXML
     protected void onButtonClick(ActionEvent e) {
-        Button clickedButton = (Button) e.getSource();
+    	if (!gameInProgress) {
+            winnerColor.setText("Game is over. Please reset to play again.");
+            return;
+        }
+    	Button clickedButton = (Button) e.getSource();
         int columnIndex = getColumnIndex(clickedButton);
         Button buttonToColor = findFirstUncoloredButtonInColumn(columnIndex);
-        if (buttonToColor != null) {
+
+        if (buttonToColor == null) {
+            // Column is full, show warning and ask for another choice
+            winnerColor.setText("Column is full. Try another column.");
+            return;
+        }
             String colorStyle = "-fx-background-color: #ff0000;";
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             buttonToColor.setStyle(newStyle);
-            buttonToColor.setDisable(true);
             logGameState("You", columnIndex);
             checkWin();
+            
+            if (!gameInProgress) {
+                return;
+            }
             
             if (currentDifficulty.equals("Easy")) {
                 randomAI();
@@ -105,7 +118,7 @@ public class SampleController {
 
             
         }
-    }
+    
     
     private void logGameState(String player, int columnIndex) {
         gameStateLog.add(player + " dropped a chip in column " + columnIndex);
@@ -121,12 +134,13 @@ public class SampleController {
         for (int i = buttons.size() - 1; i >= 0; i--) {
             Button button = buttons.get(i);
             int buttonColumnIndex = getColumnIndex(button);
-            if (buttonColumnIndex == columnIndex && !button.isDisabled()) {
+            if (buttonColumnIndex == columnIndex && !button.getStyle().contains("#ff0000") && !button.getStyle().contains("#000000")) {
                 return button;
             }
         }
         return null;
     }
+
     
     private void randomAI() {
         PauseTransition pause = new PauseTransition(Duration.seconds(1));
@@ -137,7 +151,6 @@ public class SampleController {
                 String colorStyle = "-fx-background-color: #000000;";
                 String newStyle = colorStyle + "-fx-background-radius: 100;";
                 randButton.setStyle(newStyle);
-                randButton.setDisable(true);
                 
                 logGameState("Computer", random);
                 
@@ -161,7 +174,6 @@ public class SampleController {
                 String newStyle = colorStyle + "-fx-background-radius: 100;";
                 
                 potentialWinButton.setStyle(newStyle);
-                potentialWinButton.setDisable(true);
                 
                 checkWin();
                 
@@ -175,8 +187,7 @@ public class SampleController {
                 else
             	{
 	            	potentialWinButton.setStyle(originalStyle);
-	            	potentialWinButton.setDisable(false);
-            	}
+	            	}
                
                 
             }
@@ -197,7 +208,6 @@ public class SampleController {
                 String newStyle = colorStyle + "-fx-background-radius: 100;";
                 
                 potentialWinButton.setStyle(newStyle);
-                potentialWinButton.setDisable(true);
                 
                 checkWinOpp();
                 
@@ -208,7 +218,6 @@ public class SampleController {
                     newStyle = colorStyle + "-fx-background-radius: 100;";
                     
                     potentialWinButton.setStyle(newStyle);
-                    potentialWinButton.setDisable(true);
                     //System.out.println("blocking spot found");
                     logGameState("Player", col);
                 	return;
@@ -217,8 +226,7 @@ public class SampleController {
                 else
             	{
 	            	potentialWinButton.setStyle(originalStyle);
-	            	potentialWinButton.setDisable(false);
-            	}
+	            	}
                
                 
             }
@@ -227,9 +235,58 @@ public class SampleController {
     		
     	}
     	
+    	if (!found) {
+            int bestColumn = findBestColumnForAI();
+            Button bestButton = findFirstUncoloredButtonInColumn(bestColumn);
+            if (bestButton != null) {
+                String colorStyle = "-fx-background-color: #000000;";
+                String newStyle = colorStyle + "-fx-background-radius: 100;";
+                bestButton.setStyle(newStyle);
+                logGameState("Computer", bestColumn);
+            }
+        }
+    	
     	randomAI();
     	//System.out.println("random spot found");
     }
+    
+    private int findBestColumnForAI() {
+        int bestColumn = new Random().nextInt(7); // Default to a random column
+        int maxLength = 0; // Length of the longest line found
+
+        // Check each column
+        for (int col = 0; col < 7; col++) {
+            int currentLength = calculateLineLength(col, "#000000"); // AI's color
+            if (currentLength > maxLength) {
+                maxLength = currentLength;
+                bestColumn = col;
+            }
+        }
+        return bestColumn;
+    }
+    
+    private int calculateLineLength(int col, String colorStyle) {
+        int length = 0;
+        int maxLength = 0;
+
+        // Start from the bottom of the column and move up
+        for (int row = 5; row >= 0; row--) {
+            String buttonId = "button" + row + col;
+            Button button = (Button) gridPane.lookup("#" + buttonId);
+            
+            // Check if the button has the AI's color
+            if (button != null && button.getStyle().contains(colorStyle)) {
+                length++;
+                maxLength = Math.max(maxLength, length);
+            } else {
+                // Reset length if the sequence is broken
+                length = 0;
+            }
+        }
+
+        return maxLength;
+    }
+
 
     @FXML
     protected void checkWin() {
@@ -354,11 +411,13 @@ public class SampleController {
     private String getButtonColorStyle(int row, int col) {
         String buttonId = "button" + row + col;
         Button button = (Button) gridPane.lookup("#" + buttonId);
-        if (button != null && button.isDisabled()) { // check only colored (disabled) buttons
+        if (button != null && (button.getStyle().contains("#ff0000") || button.getStyle().contains("#000000"))) {
             return button.getStyle();
         }
         return "";
     }
+    
+    private boolean gameInProgress = true;
 
     private void declareWinner(String colorStyle) {
         // Declare the winner based on the color style
@@ -370,44 +429,17 @@ public class SampleController {
             winnerColor.setText("Red wins!");
         }
         
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 7; j++) {
-            	
-            	String buttonId = "button" + i + j;
-                Button buttonToDisable = (Button) gridPane.lookup("#" + buttonId);
-                
-            	buttonToDisable.setDisable(true);
-            }
-        }
+        
+        
+        gameInProgress = false; 
     }
     
-    private void saveGame() {
-        try (PrintWriter out = new PrintWriter("gameState.txt")) {
-            for (String logEntry : gameStateLog) {
-                out.println(logEntry);
-            }
-        } catch (FileNotFoundException e) {
-            System.err.println("File not found: " + e.getMessage());
-        }
-    }
-
-    private void loadGame() {
-        try (Scanner scanner = new Scanner(new File("gameState.txt"))) {
-            gameStateLog.clear();
-            while (scanner.hasNextLine()) {
-                String logEntry = scanner.nextLine();
-                gameStateLog.add(logEntry);
-                System.out.println(logEntry);
-                // You need to implement how each log entry affects the game state
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-        }
-    }
+    
 
 
     @FXML
     protected void onReset(ActionEvent e) {
+    	resetGame();
         // Clear existing game state
         clearGameState();
 
@@ -425,9 +457,7 @@ public class SampleController {
         // Clear the game state log
         gameStateLog.clear();
 
-        // Reset any other game state variables here (e.g., score counters)
-        numYellowWins = 0;
-        numBlueWins = 0;
+        
     }
 
     private String createNewLogFile() {
@@ -443,18 +473,13 @@ public class SampleController {
     }
 
     private void resetButtons() {
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 7; j++) {
-                String buttonId = "button" + i + j;
-                Button buttonToReset = (Button) gridPane.lookup("#" + buttonId);
-
-                String colorStyle = "-fx-background-color: #cfcbcb;";
-                String newStyle = colorStyle + "-fx-background-radius: 100;";
-                buttonToReset.setStyle(newStyle);
-                buttonToReset.setDisable(false);
-            }
+        for (Button button : buttons) {
+            button.setStyle("-fx-background-color: #cfcbcb; -fx-background-radius: 100;"); // Reset style
+            button.setDisable(false); // Enable the button
         }
     }
+
+
 
     @FXML
     protected void onLoadGame(ActionEvent e) {
@@ -540,18 +565,20 @@ public class SampleController {
             }
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             buttonToColor.setStyle(newStyle);
-            buttonToColor.setDisable(true);
+            
         }
     }
 
 
     private void resetGame() {
+    	gameInProgress = true;
+        winnerColor.setText("Winner: ");
         winnerColor.setText("Winner: ");
         for (Button button : buttons) {
             String colorStyle = "-fx-background-color: #cfcbcb;";
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             button.setStyle(newStyle);
-            button.setDisable(false);
+            
         }
     }
 

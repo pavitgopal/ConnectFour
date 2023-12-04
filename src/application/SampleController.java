@@ -228,6 +228,27 @@ public class SampleController {
             }
         }
         
+        
+        for (int col = 0; col < 7; col++) { // assuming 7 columns
+            Button potentialWinButton = findFirstUncoloredButtonInColumn(col);
+            if (potentialWinButton != null) {
+                // Temporarily color the button to check for a win
+                String originalStyle = potentialWinButton.getStyle();
+                potentialWinButton.setStyle("-fx-background-color: #ff0000; -fx-background-radius: 100;");
+                potentialWinButton.setDisable(true);
+
+                if (isWinningMove(potentialWinButton)) {
+                    // Found a winning move, keep the button colored and return
+                    checkWin();
+                    return;
+                } else {
+                    // Revert the button to its original state
+                    potentialWinButton.setStyle(originalStyle);
+                    potentialWinButton.setDisable(false);
+                }
+            }
+        }
+        
         // If no winning move was found, make a random move
         randomAI();
     }

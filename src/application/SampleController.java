@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
 import javafx.scene.layout.GridPane;
 import javafx.animation.PauseTransition;
+import javafx.collections.FXCollections;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.Random;
@@ -21,6 +22,9 @@ public class SampleController {
     @FXML
     private GridPane gridPane;
     
+    @FXML
+	private ChoiceBox<String> difficultyChoiceBox;
+
     @FXML
     private Button saveButton;
 
@@ -39,6 +43,8 @@ public class SampleController {
     private int numYellowWins = 0;
     private int numBlueWins = 0;
     
+    private String currentDifficulty = "Easy"; // Default difficulty
+    
     boolean found = false;
 
     @FXML
@@ -54,7 +60,16 @@ public class SampleController {
                 }
             }
         }
+        difficultyChoiceBox.setItems(FXCollections.observableArrayList("Easy", "Hard"));
+        difficultyChoiceBox.setValue("Easy"); // Set default value
+        difficultyChoiceBox.getSelectionModel().selectedItemProperty().addListener((v, oldValue, newValue) -> onDifficultyChanged(newValue));
     }
+    
+    private void onDifficultyChanged(String newValue) {
+    	currentDifficulty = newValue;
+    }
+
+
     
     private void populateLoadGameChoiceBox() {
         File folder = new File("savedGames");
@@ -82,8 +97,12 @@ public class SampleController {
             logGameState("You", columnIndex);
             checkWin();
             
-            thoughtfulAI();
-            //randomAI();
+            if (currentDifficulty.equals("Easy")) {
+                randomAI();
+            } else if (currentDifficulty.equals("Hard")) {
+                thoughtfulAI();
+            }
+
             
         }
     }

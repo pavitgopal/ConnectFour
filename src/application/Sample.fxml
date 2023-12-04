@@ -235,7 +235,7 @@
    <bottom>
       <HBox prefHeight="78.0" prefWidth="800.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField prefHeight="41.0" prefWidth="150.0" promptText="Enter Game Name" />
+            <TextField fx:id="fileNameTextField" prefHeight="41.0" prefWidth="150.0" promptText="Enter Game Name" />
             <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
                   <Button fx:id="saveButton" mnemonicParsing="false" onAction="#onSaveGame" prefHeight="41.0" prefWidth="99.0" text="Save Game" />

@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
+import javafx.scene.control.TextField;
 
 public class SampleController {
     @FXML
@@ -31,6 +32,9 @@ public class SampleController {
 
     @FXML
     private Label winnerColor, yellowWins, blueWins;
+    
+    @FXML
+    private TextField fileNameTextField;
 
     private int numYellowWins = 0;
     private int numBlueWins = 0;
@@ -385,40 +389,85 @@ public class SampleController {
 
     @FXML
     protected void onReset(ActionEvent e) {
-    	
-    	//counter = 0;
+        // Clear existing game state
+        clearGameState();
+
+        // Create a new file for logging
+        String newFileName = createNewLogFile();
+
+        // Update the UI
         winnerColor.setText("Winner: ");
-        
+        resetButtons();
+
+        System.out.println("Game reset.");
+    }
+
+    private void clearGameState() {
+        // Clear the game state log
+        gameStateLog.clear();
+
+        // Reset any other game state variables here (e.g., score counters)
+        numYellowWins = 0;
+        numBlueWins = 0;
+    }
+
+    private String createNewLogFile() {
+        String fileName = "savedGames/" + System.currentTimeMillis() + ".txt";
+        try (PrintWriter out = new PrintWriter(fileName)) {
+            // File is created here. It will be empty initially.
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error creating new game log file: " + e.getMessage());
+        }
+        return fileName;
+    }
+
+    private void resetButtons() {
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 7; j++) {
-            	String buttonId = "button" + i + j;
+                String buttonId = "button" + i + j;
                 Button buttonToReset = (Button) gridPane.lookup("#" + buttonId);
-                
+
                 String colorStyle = "-fx-background-color: #cfcbcb;";
                 String newStyle = colorStyle + "-fx-background-radius: 100;";
                 buttonToReset.setStyle(newStyle);
                 buttonToReset.setDisable(false);
-                
-             
-            } 
+            }
         }
     }
-    
+
     @FXML
     protected void onLoadGame(ActionEvent e) {
-        String selectedFile = loadGameChoiceBox.getValue();
-        if (selectedFile != null && !selectedFile.isEmpty()) {
-            loadGame("savedGames/" + selectedFile);
+        String fileNameInput = fileNameTextField.getText();
+        if (fileNameInput == null || fileNameInput.trim().isEmpty()) {
+            System.err.println("Please enter a file name.");
+            return;
+        }
+
+        String fileName = "savedGames/" + fileNameInput + ".txt";
+        File file = new File(fileName);
+        if (file.exists()) {
+            loadGame(fileName);
+        } else {
+            System.err.println("File not found: " + fileName);
         }
     }
-
-
     
     @FXML
     protected void onSaveGame(ActionEvent e) {
-        String fileName = "savedGames/" + System.currentTimeMillis() + ".txt";
-        saveGame(fileName);
-        loadGameChoiceBox.getItems().add(fileName); // Add the new save file to the choice box
+        String fileNameInput = fileNameTextField.getText();
+        if (fileNameInput == null || fileNameInput.trim().isEmpty()) {
+            System.err.println("Please enter a file name.");
+            return;
+        }
+
+        String fileName = "savedGames/" + fileNameInput + ".txt";
+        File file = new File(fileName);
+        if (!file.exists()) {
+            loadGameChoiceBox.getItems().add(fileNameInput); // Add new file name to choice box
+        }
+        saveGame(fileName); // Save the game when requested
     }
 
     private void saveGame(String fileName) {
@@ -426,7 +475,7 @@ public class SampleController {
             for (String logEntry : gameStateLog) {
                 out.println(logEntry);
             }
-            System.out.println("Game saved to: " + fileName); // Confirm file writing
+            System.out.println("Game saved to: " + fileName);
         } catch (FileNotFoundException e) {
             System.err.println("File not found: " + e.getMessage());
         } catch (Exception e) {
@@ -434,33 +483,48 @@ public class SampleController {
         }
     }
 
+
     private void loadGame(String fileName) {
         try (Scanner scanner = new Scanner(new File(fileName))) {
-            resetGame(); // Reset the game before loading new state
+            gameStateLog.clear();
             while (scanner.hasNextLine()) {
                 String logEntry = scanner.nextLine();
-                applyLogEntry(logEntry); // Apply each log entry to the game state
+                gameStateLog.add(logEntry);
+                applyLogEntry(logEntry);
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
         }
     }
 
+
     private void applyLogEntry(String logEntry) {
+        // Example log entry format: "Player dropped a chip in column 3"
         String[] parts = logEntry.split(" ");
-        if (parts.length < 6) return; // Basic validation
+        int columnIndex;
+        try {
+            columnIndex = Integer.parseInt(parts[parts.length - 1]); // Get the column index from the last part of the log entry
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing log entry: " + logEntry);
+            return;
+        }
 
-        String player = parts[0];
-        int columnIndex = Integer.parseInt(parts[5]);
-
+        // Find the first uncolored button in this column to simulate dropping a chip
         Button buttonToColor = findFirstUncoloredButtonInColumn(columnIndex);
         if (buttonToColor != null) {
-            String colorStyle = player.equals("You") ? "-fx-background-color: #ff0000;" : "-fx-background-color: #000000;";
+            String player = parts[0]; // Assuming the player's name is the first word in the log entry
+            String colorStyle;
+            if (player.equals("You")) {
+                colorStyle = "-fx-background-color: #ff0000;"; // Red for 'You'
+            } else {
+                colorStyle = "-fx-background-color: #000000;"; // Black for 'Computer'
+            }
             String newStyle = colorStyle + "-fx-background-radius: 100;";
             buttonToColor.setStyle(newStyle);
             buttonToColor.setDisable(true);
         }
     }
+
 
     private void resetGame() {
         winnerColor.setText("Winner: ");

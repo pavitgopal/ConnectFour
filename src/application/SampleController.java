@@ -26,14 +26,22 @@ public class SampleController {
 
     private int numYellowWins = 0;
     private int numBlueWins = 0;
+    
+    private boolean WinFound = false;
 
     @FXML
     public void initialize() {
-        // Assuming you have a fixed grid size, for example, 7x7
-        for (int i = 0; i < 8; i++) {
+        // Assuming you have a fixed grid size, for example, 7x6
+        for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 7; j++) {
                 String buttonId = "button" + i + j;
                 Button button = (Button) gridPane.lookup("#" + buttonId);
+                String colorStyle = "-fx-background-color: #cfcbcb;";
+                String newStyle = colorStyle + "-fx-background-radius: 100;";
+                button.setStyle(newStyle);
+                
+                //System.out.println(button.getId());
+                
                 if (button != null) {
                     buttons.add(button);
                     button.setOnAction(this::onButtonClick);
@@ -47,6 +55,8 @@ public class SampleController {
     
     @FXML
     protected void onButtonClick(ActionEvent e) {
+    	
+    	
         Button clickedButton = (Button) e.getSource();
         // Extract the column index from the button ID
         int columnIndex = getColumnIndex(clickedButton);
@@ -63,8 +73,8 @@ public class SampleController {
             checkWin();
             
             
-            randomAI();
-            //thoughtfulAI();
+            //randomAI();
+            thoughtfulAI();
         }
     }
 
@@ -110,12 +120,13 @@ public class SampleController {
     protected void checkWin() {
         // Check for vertical (column-wise) win
         for (int col = 0; col < 7; col++) { // assuming 7 columns
-            for (int row = 0; row < 5; row++) { // stop at 5 to avoid out of bounds
+            for (int row = 0; row < 6; row++) { // stop at 5 to avoid out of bounds
                 String colorStyle = getButtonColorStyle(row, col);
                 if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col))
                         && colorStyle.equals(getButtonColorStyle(row + 2, col))
                         && colorStyle.equals(getButtonColorStyle(row + 3, col))) {
                     declareWinner(colorStyle);
+                    WinFound = true;
                     return;
                 }
             }
@@ -129,6 +140,7 @@ public class SampleController {
                         && colorStyle.equals(getButtonColorStyle(row, col + 2))
                         && colorStyle.equals(getButtonColorStyle(row, col + 3))) {
                     declareWinner(colorStyle);
+                    WinFound = true;
                     return;
                 }
             }
@@ -142,6 +154,7 @@ public class SampleController {
                         && colorStyle.equals(getButtonColorStyle(row + 2, col + 2))
                         && colorStyle.equals(getButtonColorStyle(row + 3, col + 3))) {
                     declareWinner(colorStyle);
+                    WinFound = true;
                     return;
                 }
             }
@@ -155,6 +168,7 @@ public class SampleController {
                         && colorStyle.equals(getButtonColorStyle(row + 2, col - 2))
                         && colorStyle.equals(getButtonColorStyle(row + 3, col - 3))) {
                     declareWinner(colorStyle);
+                    WinFound = true;
                     return;
                 }
             }
@@ -180,7 +194,7 @@ public class SampleController {
             winnerColor.setText("Red wins!");
         }
         
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 7; j++) {
             	
             	String buttonId = "button" + i + j;
@@ -192,222 +206,46 @@ public class SampleController {
     }
     
     
-    
-    
+    void thoughtfulAI() {
+        // Check each column to see if placing a pawn there would result in a win
+        for (int col = 0; col < 7; col++) { // assuming 7 columns
+            Button potentialWinButton = findFirstUncoloredButtonInColumn(col);
+            if (potentialWinButton != null) {
+                // Temporarily color the button to check for a win
+                String originalStyle = potentialWinButton.getStyle();
+                potentialWinButton.setStyle("-fx-background-color: #000000; -fx-background-radius: 100;");
+                potentialWinButton.setDisable(true);
 
-
-    
-    /*void thoughtfulAI() {
-        // 1. Check for a winning move
-        int winningMove = findWinningMove("#000000"); // Black's color
-        if (winningMove != -1) {
-            playMove(winningMove);
-            return;
+                if (isWinningMove(potentialWinButton)) {
+                    // Found a winning move, keep the button colored and return
+                    checkWin();
+                    return;
+                } else {
+                    // Revert the button to its original state
+                    potentialWinButton.setStyle(originalStyle);
+                    potentialWinButton.setDisable(false);
+                }
+            }
         }
-
-        // 2. Block player's winning move
-        int blockingMove = findWinningMove("#ff0000"); // Red's color
-        if (blockingMove != -1) {
-            playMove(blockingMove);
-            return;
-        }
-
-        // 3. Extend AI's own line
-        int bestMove = findBestMoveForAI();
-        if (bestMove != -1) {
-            playMove(bestMove);
-            return;
-        }
-
-        // 4. If no other options, make a random move
+        
+        // If no winning move was found, make a random move
         randomAI();
     }
 
-    private int findWinningMove(String colorStyle) {
-        for (int col = 0; col < 7; col++) { // Assuming 7 columns
-            int row = getTopEmptyRow(col);
-            if (row != -1) {
-                // Temporarily play the move
-                setButtonStyle(row, col, colorStyle);
-                if (checkWinAI()) {
-                    resetButtonStyle(row, col); // Reset the button style
-                    return col;
-                }
-                resetButtonStyle(row, col); // Reset the button style
-            }
-        }
-        return -1; // No winning move found
-    }
-    
-    protected boolean checkWinAI() {
-        // Check for vertical (column-wise) win
-        for (int col = 0; col < 7; col++) { // assuming 7 columns
-            for (int row = 0; row < 5; row++) { // stop at 5 to avoid out of bounds
-                String colorStyle = getButtonColorStyle(row, col);
-                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col))
-                        && colorStyle.equals(getButtonColorStyle(row + 2, col))
-                        && colorStyle.equals(getButtonColorStyle(row + 3, col))) {
-                    
-                    return true;
-                }
-            }
-        }
-
-        // Check for horizontal (row-wise) win
-        for (int row = 0; row < 8; row++) { // assuming 8 rows
-            for (int col = 0; col < 4; col++) { // stop at 4 to avoid out of bounds
-                String colorStyle = getButtonColorStyle(row, col);
-                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row, col + 1))
-                        && colorStyle.equals(getButtonColorStyle(row, col + 2))
-                        && colorStyle.equals(getButtonColorStyle(row, col + 3))) {
-                    
-                    return true;
-                }
-            }
-        }
-        
-        // Check for diagonal win (Top-Left to Bottom-Right)
-        for (int row = 0; row < 5; row++) { // assuming 8 rows, stop at 5
-            for (int col = 0; col < 4; col++) { // assuming 7 columns, stop at 4
-                String colorStyle = getButtonColorStyle(row, col);
-                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col + 1))
-                        && colorStyle.equals(getButtonColorStyle(row + 2, col + 2))
-                        && colorStyle.equals(getButtonColorStyle(row + 3, col + 3))) {
-                    
-                    return true;
-                }
-            }
-        }
-
-        // Check for diagonal win (Top-Right to Bottom-Left)
-        for (int row = 0; row < 5; row++) {
-            for (int col = 3; col < 7; col++) { // start from column 3 to avoid out of bounds
-                String colorStyle = getButtonColorStyle(row, col);
-                if (!colorStyle.isEmpty() && colorStyle.equals(getButtonColorStyle(row + 1, col - 1))
-                        && colorStyle.equals(getButtonColorStyle(row + 2, col - 2))
-                        && colorStyle.equals(getButtonColorStyle(row + 3, col - 3))) {
-                    
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    private void resetButtonStyle(int row, int col) {
-        String buttonId = "button" + row + col;
-        Button button = (Button) gridPane.lookup("#" + buttonId);
-        if (button != null) {
-            // Assuming the default style is without color or disabled state
-            String defaultStyle = "-fx-background-color: #cfcbcb; -fx-background-radius: 100;";
-            button.setStyle(defaultStyle);
-        }
-    }
-    
-    private int getTopEmptyRow(int col) {
-        for (int row = 0; row < 8; row++) { // Assuming 8 rows
-            String buttonId = "button" + row + col;
-            Button button = (Button) gridPane.lookup("#" + buttonId);
-            if (button != null && !button.isDisabled()) {
-                return row;
-            }
-        }
-        return -1; // Return -1 if the column is full
-    }
-    
-    
-    
-    
-    private void setButtonStyle(int row, int col, String colorStyle) {
-        String buttonId = "button" + row + col;
-        Button button = (Button) gridPane.lookup("#" + buttonId);
-        if (button != null) {
-            button.setStyle(colorStyle + "-fx-background-radius: 100;");
-        }
+    private boolean isWinningMove(Button button) {
+        // Call checkWin() and return true if a win is found
+        // You need to modify checkWin to return a boolean indicating if a win was found
+        checkWin();
+        return WinFound;
     }
 
-    private int findBestMoveForAI() {
-        int bestCol = -1;
-        int maxInLine = 0; // Maximum number of AI chips in line found so far
-
-        for (int col = 0; col < 7; col++) {
-            int row = getTopEmptyRow(col);
-            if (row != -1) {
-                int inLine = countMaxInLine(row, col, "#000000"); // Black's color
-                if (inLine > maxInLine) {
-                    maxInLine = inLine;
-                    bestCol = col;
-                }
-            }
-        }
-        return bestCol;
-    }
-    
-    private int countMaxInLine(int row, int col, String colorStyle) {
-        int maxCount = 0;
-
-        // Check horizontally
-        int count = 1; // Start with the current chip
-        // Check to the left
-        for (int i = col - 1; i >= 0 && getButtonColorStyle(row, i).equals(colorStyle); i--) {
-            count++;
-        }
-        // Check to the right
-        for (int i = col + 1; i < 7 && getButtonColorStyle(row, i).equals(colorStyle); i++) {
-            count++;
-        }
-        maxCount = Math.max(maxCount, count);
-
-        // Check vertically (only need to check downwards)
-        count = 1; // Start with the current chip
-        for (int i = row + 1; i < 8 && getButtonColorStyle(i, col).equals(colorStyle); i++) {
-            count++;
-        }
-        maxCount = Math.max(maxCount, count);
-
-        // Check diagonal (Top-Left to Bottom-Right)
-        count = 1; // Start with the current chip
-        for (int i = 1; row + i < 8 && col + i < 7 && getButtonColorStyle(row + i, col + i).equals(colorStyle); i++) {
-            count++;
-        }
-        for (int i = 1; row - i >= 0 && col - i >= 0 && getButtonColorStyle(row - i, col - i).equals(colorStyle); i++) {
-            count++;
-        }
-        maxCount = Math.max(maxCount, count);
-
-        // Check diagonal (Top-Right to Bottom-Left)
-        count = 1; // Start with the current chip
-        for (int i = 1; row + i < 8 && col - i >= 0 && getButtonColorStyle(row + i, col - i).equals(colorStyle); i++) {
-            count++;
-        }
-        for (int i = 1; row - i >= 0 && col + i < 7 && getButtonColorStyle(row - i, col + i).equals(colorStyle); i++) {
-            count++;
-        }
-        maxCount = Math.max(maxCount, count);
-
-        return maxCount;
-    }
-
-    
-
-    private void playMove(int columnIndex) {
-        Button buttonToPlay = findFirstUncoloredButtonInColumn(columnIndex);
-        if (buttonToPlay != null) {
-            String colorStyle = "-fx-background-color: #000000;"; // Black's color
-            String newStyle = colorStyle + "-fx-background-radius: 100;";
-            buttonToPlay.setStyle(newStyle);
-            buttonToPlay.setDisable(true);
-            checkWin();
-        }
-    }*/
 
     protected void Reset()
     {
     	counter = 0;
         winnerColor.setText("Winner: ");
         
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 7; j++) {
             	String buttonId = "button" + i + j;
                 Button buttonToReset = (Button) gridPane.lookup("#" + buttonId);
@@ -417,7 +255,6 @@ public class SampleController {
                 buttonToReset.setStyle(newStyle);
                 buttonToReset.setDisable(false);
                 
-             
             } 
         }
     }
